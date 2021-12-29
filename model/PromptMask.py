@@ -28,6 +28,7 @@ class PromptMask(nn.Module):
     def __init__(self):
         super(PromptMask, self).__init__()
         self.roberta = RobertaForMaskedLM.from_pretrained(path['roberta_path'])
+        self.label_emb = nn.Embedding(cfg['word_size'], hyper_roberta['word_dim'])
         self.lm_head = LMHead()
 
     def forward(self, input_x):
@@ -40,7 +41,7 @@ class PromptMask(nn.Module):
         x = x[mask0]
         gumbel_softmax = F.gumbel_softmax(x, hard=True)
         # x = torch.softmax(x, dim=1)
-        roberta_emb = self.roberta.roberta.embeddings.word_embeddings.weight
+        roberta_emb = self.label_emb.weight
 
         x = torch.matmul(gumbel_softmax, roberta_emb)
         x = self.lm_head(x)
