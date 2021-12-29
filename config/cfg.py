@@ -4,7 +4,7 @@ cfg = {
     'train_batch_size': 1,
     'test_batch_size': 32,
     'bert_learning_rate': 1e-5,
-    'other_learning_rate': 1e-3,
+    'other_learning_rate': 1e-4,
     'epoch': 20,
     'K': 8,
     'Kt': 2000,
@@ -17,7 +17,7 @@ cfg = {
 
 hyper_roberta = {
     'word_dim': 1024,
-    'label_dim': 256,
+    'label_dim': 512,
     'dropout': 0.1
 }
 
