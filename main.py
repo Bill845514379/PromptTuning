@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import pandas as pd
+from common.util import change_lr
 import numpy as np
 from torch.utils.data import DataLoader, TensorDataset
 from common.text2id import X_data2id, get_answer_id
@@ -7,7 +8,7 @@ import os
 import torch
 from config.cfg import cfg, path, hyper_roberta
 from common.load_data import load_data, tokenizer, data_split
-from model.PromptMask import PromptMask
+from model.PromptMask import PromptMask, LMHead
 import torch.optim as optim
 from transformers import AdamW, get_linear_schedule_with_warmup
 import torch.nn as nn
@@ -59,48 +60,34 @@ for test_id in range(len(seeds)):
         drop_last=False
     )
 
-    net = PromptMask()
-    net = net.to(device)
+    net_mask = PromptMask()
+    net_mask = net_mask.to(device)
+
+    net_head = LMHead()
+    net_head = net_head.to(device)
     # 核心思想： 将BERT部分参数与其他参数分开管理
-    bert_params = []
-    other_params = []
-
-    for name, para in net.named_parameters():
-        # 对于需要更新的参数：
-        if para.requires_grad:
-            # BERT部分所有参数都存在于bert_encoder中（针对不同模型，可以print(name)输出查看）
-            # print(name)
-            if "roberta.encoder" in name:
-                bert_params += [para]
-            else:
-                other_params += [para]
-
-    params = [
-        {"params": bert_params, "lr": cfg['bert_learning_rate']},
-        {"params": other_params, "lr": cfg['other_learning_rate']},
-    ]
+    # bert_params = []
+    # other_params = []
+    #
+    # for name, para in net.named_parameters():
+    #     # 对于需要更新的参数：
+    #     if para.requires_grad:
+    #         # BERT部分所有参数都存在于bert_encoder中（针对不同模型，可以print(name)输出查看）
+    #         # print(name)
+    #         if "roberta.encoder" in name:
+    #             bert_params += [para]
+    #         else:
+    #             other_params += [para]
+    #
+    # params = [
+    #     {"params": bert_params, "lr": cfg['bert_learning_rate']},
+    #     {"params": other_params, "lr": cfg['other_learning_rate']},
+    # ]
 
     if cfg['optimizer'] == 'Adam':
-        optimizer = optim.Adam(net.parameters())
-    elif cfg['optimizer'] == 'SGD':
-        optimizer = optim.SGD(net.parameters(), weight_decay=1e-3)
-    elif cfg['optimizer'] == 'AdamW':
-        # Prepare optimizer and schedule (linear warmup and decay)
-        no_decay = ["bias", "LayerNorm.weight"]
-        optimizer_grouped_parameters = [
-            {
-                "params": [p for n, p in net.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": 0.0,
-            },
-            {
-                "params": [p for n, p in net.named_parameters() if any(nd in n for nd in no_decay)],
-                "weight_decay": 0.0,
-            },
-        ]
-        optimizer = AdamW(optimizer_grouped_parameters, lr=cfg['bert_learning_rate'], eps=1e-8)
-        num_warmup_steps = 0
-        scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps,
-                                                    num_training_steps=len(loader_train) // 1 * cfg['epoch'])
+        optimizer_mask = optim.Adam(net_mask.parameters(), lr=cfg['bert_learning_rate'])
+        optimizer_head = optim.Adam(net_mask.parameters(), lr=cfg['other_learning_rate'])
+
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=4, verbose=True,
     #                                                        threshold=0.0001,
     #                                                        threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-08)
@@ -114,35 +101,43 @@ for test_id in range(len(seeds)):
         #     current_lr *= 0.95
         #     change_lr(optimizer, current_lr)
 
+        if i % 3 != 0:
+            change_lr(optimizer_mask, 0)
+        else:
+            change_lr(optimizer_mask, lr=cfg['bert_learning_rate'])
+
         print('-------------------------   training   ------------------------------')
         time0 = time.time()
         batch = 0
         ave_loss, sum_acc = 0, 0
         for batch_x, batch_y in loader_train:
-            net.train()
+            net_mask.train()
+            net_head.train()
             batch_x, batch_y = Variable(batch_x).long(), Variable(batch_y).long()
             batch_x, batch_y = batch_x.to(device), batch_y.to(device)
 
-            output = net(batch_x)
+            output_0 = net_mask(batch_x)
+            output = net_head(output_0)
+
             criterion = nn.CrossEntropyLoss()
             loss = criterion(output, batch_y)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(net.parameters(), 1.0)
-            optimizer.step()  # 更新权重
 
-            if cfg['optimizer'] == 'AdamW':
-                scheduler.step()
-            optimizer.zero_grad()  # 清空梯度缓存
+            optimizer_mask.step()  # 更新权重
+            optimizer_head.step()  # 更新权重
+
+            optimizer_mask.zero_grad()  # 清空梯度缓存
+            optimizer_head.zero_grad()  # 清空梯度缓存
             ave_loss += loss
             batch += 1
 
             if batch % 2 == 0:
-                print('epoch:{}/{},batch:{}/{},time:{}, loss:{},learning_rate:{}'.format(i + 1, epoch, batch,
+                print('epoch:{}/{},batch:{}/{},time:{}, loss:{},bert_learning_rate:{}, other_learning_rate:{}'.format(i + 1, epoch, batch,
                                                                                          len(loader_train),
                                                                                          round(time.time() - time0, 4),
                                                                                          loss,
-                                                                                         optimizer.param_groups[
-                                                                                             0]['lr']))
+                                                                                         optimizer_mask.param_groups[0]['lr'],
+                                                                                        optimizer_head.param_groups[0]['lr']))
         # scheduler.step(ave_loss)
         print('------------------ epoch:{} ----------------'.format(i + 1))
         print('train_average_loss{}'.format(ave_loss / len(loader_train)))
@@ -155,12 +150,15 @@ for test_id in range(len(seeds)):
             sum_acc, num = 0, 0
             # torch.save(net.state_dict(), 'save_model/params' + str(i + 1) + '.pkl')
             for batch_x, batch_y in loader_test:
-                net.eval()
+                net_mask.eval()
+                net_head.eval()
+
                 batch_x, batch_y = Variable(batch_x).long(), Variable(batch_y).long()
                 batch_x, batch_y = batch_x.to(device), batch_y.to(device)
 
                 with torch.no_grad():
-                    output = net(batch_x)
+                    output = net_mask(batch_x)
+                    output = net_head(output)
 
                 _, pred = torch.max(output, dim=1)
 
