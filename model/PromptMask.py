@@ -15,11 +15,14 @@ device = torch.device(cfg['device'])
 class LMHead(nn.Module):
     def __init__(self):
         super(LMHead, self).__init__()
-        self.dence = nn.Linear(hyper_roberta['word_dim'], hyper_roberta['word_dim'])
-        self.classifer = nn.Linear(hyper_roberta['word_dim'], 2)
+        self.dence = nn.Linear(hyper_roberta['label_dim'], hyper_roberta['label_dim'])
+        self.layer_norm = BertLayerNorm(hyper_roberta['label_dim'], eps=1e-5)
+        self.classifer = nn.Linear(hyper_roberta['label_dim'], 2)
 
     def forward(self, input_x):
         x = self.dence(input_x)
+        x = gelu(x)
+        x = self.layer_norm(x)
         x = self.classifer(x)
         return x
 
@@ -28,7 +31,7 @@ class PromptMask(nn.Module):
     def __init__(self):
         super(PromptMask, self).__init__()
         self.roberta = RobertaForMaskedLM.from_pretrained(path['roberta_path'])
-        self.label_emb = nn.Embedding(cfg['word_size'], hyper_roberta['word_dim'])
+        self.label_emb = nn.Embedding(cfg['word_size'], hyper_roberta['label_dim'])
         self.lm_head = LMHead()
 
     def forward(self, input_x):
