@@ -12,11 +12,23 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg['gpu_id'])
 device = torch.device(cfg['device'])
 
+class LMHead(nn.Module):
+    def __init__(self):
+        super(LMHead, self).__init__()
+        self.dence = nn.Linear(hyper_roberta['word_size'], hyper_roberta['word_dim'])
+        self.classifer = nn.Linear(hyper_roberta['word_dim'], 2)
+
+    def forward(self, input_x):
+        x = self.dence(input_x)
+        x = self.classifer(x)
+        return x
+
 
 class PromptMask(nn.Module):
     def __init__(self):
         super(PromptMask, self).__init__()
         self.roberta = RobertaForMaskedLM.from_pretrained(path['roberta_path'])
+        self.lm_head = LMHead()
 
     def forward(self, input_x):
         mask0 = (input_x == 50264)
@@ -26,12 +38,12 @@ class PromptMask(nn.Module):
         x = input_x[0]
         # x = self.lm_head(x)
         x = x[mask0]
-        # gumbel_softmax = F.gumbel_softmax(x, hard=True)
+        gumbel_softmax = F.gumbel_softmax(x, hard=True)
         # x = torch.softmax(x, dim=1)
-        # roberta_emb = self.roberta_mask.roberta.embeddings.word_embeddings.weight
+        roberta_emb = self.roberta_mask.roberta.embeddings.word_embeddings.weight
 
-        # x = torch.matmul(gumbel_softmax, roberta_emb)
-        # x = self.lm_head(x)
+        x = torch.matmul(gumbel_softmax, roberta_emb)
+        x = self.lm_head(x)
 
         return x
 
