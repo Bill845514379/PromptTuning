@@ -181,10 +181,7 @@ for test_id in range(len(seeds)):
             print('test_acc:{}, time:{}'.format(round(acc, 4), time.time()-time0))
             print('============================================'.format(i + 1))
             average_acc += acc
-            with open('output/pre_out' + str(test_id) + '.txt', 'w', encoding='utf-8') as file:
-                for j in range(len(label_out)):
-                    file.write(str(label_out[j]))
-                    file.write('\n')
+
 
 average_acc /= 5
 
