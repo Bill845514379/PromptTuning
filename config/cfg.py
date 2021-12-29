@@ -3,7 +3,7 @@ cfg = {
     'max_len': 100,
     'train_batch_size': 1,
     'test_batch_size': 32,
-    'bert_learning_rate': 1e-5,
+    'bert_learning_rate': 0,
     'other_learning_rate': 1e-5,
     'epoch': 20,
     'K': 8,
