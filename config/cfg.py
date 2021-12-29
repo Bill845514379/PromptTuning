@@ -23,7 +23,7 @@ hyper_roberta = {
 path = {
     'neg_path': 'data/rt-polaritydata/neg_label.txt',
     'pos_path': 'data/rt-polaritydata/pos_label.txt',
-    'roberta_path': 'pretrained_models/roberta-large'
+    'roberta_path': 'roberta-large'
 }
 
 
