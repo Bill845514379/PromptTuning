@@ -50,8 +50,6 @@ class PromptMask(nn.Module):
         # x = self.lm_head(x)
         x = x[mask0]
 
-        x = self.lm_head(x)
-
         return x
 
 
