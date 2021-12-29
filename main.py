@@ -61,28 +61,27 @@ for test_id in range(len(seeds)):
 
     net = PromptMask()
     net = net.to(device)
-    # # 核心思想： 将BERT部分参数与其他参数分开管理
-    # bert_params = []
-    # other_params = []
-    #
-    # for name, para in net.named_parameters():
-    #     # 对于需要更新的参数：
-    #     if para.requires_grad:
-    #         # BERT部分所有参数都存在于bert_encoder中（针对不同模型，可以print(name)输出查看）
-    #         # print(name)
-    #         if "roberta.encoder" in name:
-    #             bert_params += [para]
-    #         else:
-    #             other_params += [para]
-    #
-    # params = [
-    #     {"params": bert_params, "lr": cfg['bert_learning_rate']},
-    #     {"params": other_params, "lr": cfg['other_learning_rate']},
-    # ]
+    # 核心思想： 将BERT部分参数与其他参数分开管理
+    bert_params = []
+    other_params = []
+
+    for name, para in net.named_parameters():
+        # 对于需要更新的参数：
+        if para.requires_grad:
+            # BERT部分所有参数都存在于bert_encoder中（针对不同模型，可以print(name)输出查看）
+            # print(name)
+            if "roberta.encoder" in name:
+                bert_params += [para]
+            else:
+                other_params += [para]
+
+    params = [
+        {"params": bert_params, "lr": cfg['bert_learning_rate']},
+        {"params": other_params, "lr": cfg['other_learning_rate']},
+    ]
 
     if cfg['optimizer'] == 'Adam':
-        optimizer = optim.Adam(net.parameters(), lr=cfg['bert_learning_rate'])
-
+        optimizer = optim.Adam(net.parameters())
     elif cfg['optimizer'] == 'SGD':
         optimizer = optim.SGD(net.parameters(), weight_decay=1e-3)
     elif cfg['optimizer'] == 'AdamW':
