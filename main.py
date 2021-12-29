@@ -104,7 +104,7 @@ for test_id in range(len(seeds)):
         if i % 3 != 0:
             change_lr(optimizer_mask, 0)
         else:
-            change_lr(optimizer_mask, lr=cfg['bert_learning_rate'])
+            change_lr(optimizer_mask, cfg['bert_learning_rate'])
 
         print('-------------------------   training   ------------------------------')
         time0 = time.time()
