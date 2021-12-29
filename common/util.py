@@ -80,6 +80,10 @@ def reorder_span(sentence, probability, span_radio):
         i += span_len
     return ''.join(ans)
 
+def change_lr(optimizer, new_lr):
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = new_lr
+
 if __name__ == '__main__':
     text = 'Good morning! What are you doing now? What should I do? I want to see a movie with you.'
     ans = delete_character(text, 0.1)
