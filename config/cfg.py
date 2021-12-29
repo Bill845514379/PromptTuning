@@ -17,6 +17,7 @@ cfg = {
 
 hyper_roberta = {
     'word_dim': 1024,
+    'label_dim': 256,
     'dropout': 0.1
 }
 
