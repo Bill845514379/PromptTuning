@@ -15,7 +15,7 @@ device = torch.device(cfg['device'])
 class LMHead(nn.Module):
     def __init__(self):
         super(LMHead, self).__init__()
-        self.dence = nn.Linear(cfg['word_size'], hyper_roberta['word_dim'])
+        self.dence = nn.Linear(hyper_roberta['word_dim'], hyper_roberta['word_dim'])
         self.classifer = nn.Linear(hyper_roberta['word_dim'], 2)
 
     def forward(self, input_x):
