@@ -40,7 +40,7 @@ class PromptMask(nn.Module):
         x = x[mask0]
         gumbel_softmax = F.gumbel_softmax(x, hard=True)
         # x = torch.softmax(x, dim=1)
-        roberta_emb = self.roberta_mask.roberta.embeddings.word_embeddings.weight
+        roberta_emb = self.roberta.roberta.embeddings.word_embeddings.weight
 
         x = torch.matmul(gumbel_softmax, roberta_emb)
         x = self.lm_head(x)
