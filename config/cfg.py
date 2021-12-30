@@ -5,7 +5,7 @@ cfg = {
     'test_batch_size': 32,
     'bert_learning_rate': 1e-5,
     'other_learning_rate': 1e-4,
-    'epoch': 30,
+    'epoch': 50,
     'K': 8,
     'Kt': 2000,
     'template': 'It was <mask>.',
