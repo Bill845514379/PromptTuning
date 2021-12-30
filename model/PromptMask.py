@@ -18,8 +18,7 @@ class LMHead(nn.Module):
         self.dence = nn.Linear(hyper_roberta['label_dim'], hyper_roberta['label_dim'])
 
         self.layer_norm = BertLayerNorm(hyper_roberta['label_dim'], eps=1e-5)
-        self.classifer = nn.Linear(hyper_roberta['label_dim'], cfg['word_size'], bias=False)
-        self.classifer.weight = nn.Parameter(PromptMask().roberta.embeddings.word_embeddings.weight.clone())
+        self.classifer = PromptMask().roberta.embeddings.word_embeddings
         self.bias = nn.Parameter(torch.zeros(cfg['word_size']))
 
     def forward(self, input_x):
