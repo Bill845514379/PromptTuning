@@ -47,6 +47,8 @@ class PromptMask(nn.Module):
         self.roberta = RobertaForMaskedLM.from_pretrained(path['roberta_path'])
 
         self.classifer = nn.Linear(hyper_roberta['label_dim'], 2)
+        self.emb = self.roberta.roberta.embeddings.word_embeddings
+        self.classifer.weight = nn.Parameter(torch.cat([self.emb.weight[0, :].unsqueeze(dim=0), self.emb.weight[0, :].unsqueeze(dim=0)], dim=0).clone())
         # self.roberta._tie_or_clone_weights(self.classifer, self.roberta.roberta.embeddings.word_embeddings)
 
 
