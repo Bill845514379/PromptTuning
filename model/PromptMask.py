@@ -44,21 +44,30 @@ class LMHead(nn.Module):
 class PromptMask(nn.Module):
     def __init__(self):
         super(PromptMask, self).__init__()
-        self.roberta = RobertaModel.from_pretrained(path['roberta_path'])
-        self.lm_head = LMHead()
-        self.lm_head.classifer.weight = nn.Parameter(self.roberta.embeddings.word_embeddings.weight.clone())
+        self.roberta = RobertaForMaskedLM.from_pretrained(path['roberta_path'])
+        
+        self.classifer = nn.Linear(hyper_roberta['label_dim'], cfg['word_size'], bias=False)
+        self.classifer.weight = PromptMask().roberta.embeddings.word_embeddings.weight
+        self.bias = nn.Parameter(torch.zeros(cfg['word_size']))
+        # self.lm_head = LMHead()
+        # self.lm_head.classifer.weight = nn.Parameter(self.roberta.embeddings.word_embeddings.weight.clone())
 
 
     def forward(self, input_x):
         mask0 = (input_x == 50264)
         mask1 = (input_x != 1).type(torch.long)
 
-        input_x = self.roberta(input_x, attention_mask=mask1)
+        input_x = self.roberta.roberta(input_x, attention_mask=mask1)
         x = input_x[0]
-        # x = self.lm_head(x)
-        # x = x[mask0]
+        
+        x = self.roberta.lm_head.dense(x)
+        x = gelu(x)
+        x = self.roberta.lm_head.layer_norm(x)
+        
+        x = self.classifer(x) + self.bias
+        x = x[mask0]
 
-        x = self.lm_head(x, mask0)
+        # x = self.lm_head(x, mask0)
         return x
 
 
