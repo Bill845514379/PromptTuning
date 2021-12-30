@@ -15,23 +15,28 @@ device = torch.device(cfg['device'])
 class LMHead(nn.Module):
     def __init__(self):
         super(LMHead, self).__init__()
-        # self.label_emb = nn.Embedding(cfg['word_size'], hyper_roberta['label_dim'])
-        # self.label_emb.weight = nn.Parameter(PromptMask().roberta.roberta.embeddings.word_embeddings.weight.clone(), requires_grad=True)
-        # self.dence = nn.Linear(hyper_roberta['label_dim'], hyper_roberta['label_dim'])
-        # self.layer_norm = BertLayerNorm(hyper_roberta['label_dim'], eps=1e-5)
+        self.dropout = nn.Dropout(hyper_roberta['dropout'])
+        self.dence_word = nn.Linear(hyper_roberta['label_dim'], 2)
+        self.label_emb = nn.Embedding(2, hyper_roberta['label_dim'])
+        self.dence = nn.Linear(hyper_roberta['label_dim'], hyper_roberta['label_dim'])
+        self.layer_norm = BertLayerNorm(hyper_roberta['label_dim'], eps=1e-5)
         self.classifer = nn.Linear(hyper_roberta['label_dim'], 2)
 
     def forward(self, input_x):
         x = input_x
-        # x = F.gumbel_softmax(input_x, hard=True)
+        x = self.dropout(x)
+        x = self.dence_word(x)
+        x = gelu(x)
+        
+        x = F.gumbel_softmax(x, hard=True)
         # # x = torch.softmax(input_x, dim=1)
-        # roberta_emb = self.label_emb.weight
-        #
-        # input_x = torch.matmul(x, roberta_emb)
-        #
-        # x = self.dence(input_x)
-        # x = gelu(x)
-        # x = self.layer_norm(x)
+        roberta_emb = self.label_emb.weight
+
+        input_x = torch.matmul(x, roberta_emb)
+
+        x = self.dence(input_x)
+        x = gelu(x)
+        x = self.layer_norm(x)
         x = self.classifer(x)
         return x
 
