@@ -46,7 +46,7 @@ class PromptMask(nn.Module):
         super(PromptMask, self).__init__()
         self.roberta = RobertaModel.from_pretrained(path['roberta_path'])
         self.lm_head = LMHead()
-        self.lm_head.classifer.weight = self.roberta.roberta.embeddings.word_embeddings.weight
+        self.lm_head.classifer.weight = self.roberta.embeddings.word_embeddings.weight
 
     def forward(self, input_x):
         mask0 = (input_x == 50264)
