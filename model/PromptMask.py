@@ -57,7 +57,7 @@ class PromptMask(nn.Module):
         mask0 = (input_x == 50264)
         mask1 = (input_x != 1).type(torch.long)
 
-        input_x = self.roberta(input_x, attention_mask=mask1)
+        input_x = self.roberta.roberta(input_x, attention_mask=mask1)
         x = input_x[0]
 
         x = self.roberta.lm_head.dense(x)
