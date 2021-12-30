@@ -47,9 +47,9 @@ class PromptMask(nn.Module):
         self.roberta = RobertaForMaskedLM.from_pretrained(path['roberta_path'])
 
         self.classifer = nn.Linear(hyper_roberta['label_dim'], 2)
-        self.emb = self.roberta.roberta.embeddings.word_embeddings
-        self.classifer.weight = nn.Parameter(torch.cat([self.emb.weight[6587, :].unsqueeze(dim=0), self.emb.weight[372, :].unsqueeze(dim=0)], dim=0).clone())
-        # self.roberta._tie_or_clone_weights(self.classifer, self.roberta.roberta.embeddings.word_embeddings)
+        # self.emb = self.roberta.roberta.embeddings.word_embeddings
+        # self.classifer.weight = nn.Parameter(torch.cat([self.emb.weight[6587, :].unsqueeze(dim=0), self.emb.weight[372, :].unsqueeze(dim=0)], dim=0).clone())
+        self.roberta._tie_or_clone_weights(self.classifer, self.roberta.roberta.embeddings.word_embeddings)
 
 
     def forward(self, input_x):
@@ -58,12 +58,12 @@ class PromptMask(nn.Module):
 
         input_x = self.roberta.roberta(input_x, attention_mask=mask1)
         x = input_x[0]
-        x = x[mask0]
 
         x = self.roberta.lm_head.dense(x)
         x = gelu(x)
         x = self.roberta.lm_head.layer_norm(x)
 
+        x = x[mask0]
         x = self.classifer(x)
 
 
