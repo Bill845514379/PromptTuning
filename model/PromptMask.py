@@ -56,13 +56,14 @@ class PromptMask(nn.Module):
 
         input_x = self.roberta.roberta(input_x, attention_mask=mask1)
         x = input_x[0]
+        x = x[mask0]
 
         x = self.roberta.lm_head.dense(x)
         x = gelu(x)
         x = self.roberta.lm_head.layer_norm(x)
 
         x = self.classifer(x)
-        x = x[mask0]
+
 
         # x = self.lm_head(x, mask0)
         return x
