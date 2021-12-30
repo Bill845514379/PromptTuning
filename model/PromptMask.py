@@ -22,7 +22,7 @@ class LMHead(nn.Module):
         self.classifer.weight = PromptMask().roberta.embeddings.word_embeddings.weight
         self.bias = nn.Parameter(torch.zeros(cfg['word_size']))
 
-    def forward(self, input_x):
+    def forward(self, input_x, mask0):
         # x = input_x
         # x = self.dropout(x)
         # x = self.dence_word(x)
@@ -38,7 +38,7 @@ class LMHead(nn.Module):
         x = gelu(x)
         x = self.layer_norm(x)
         x = self.classifer(x) + self.bias
-        return x
+        return x[mask0]
 
 
 class PromptMask(nn.Module):
@@ -53,9 +53,9 @@ class PromptMask(nn.Module):
         input_x = self.roberta(input_x, attention_mask=mask1)
         x = input_x[0]
         # x = self.lm_head(x)
-        x = x[mask0]
+        # x = x[mask0]
 
-        return x
+        return x, mask0
 
 
 
