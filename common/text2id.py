@@ -28,8 +28,8 @@ def get_answer_id(y_data, tokenizer):
     text = ' '.join(cfg['answer'])
     token = tokenizer.tokenize(text)
     ids = tokenizer.convert_tokens_to_ids(token)
-    answer_map = [ids[0], ids[1]]
-    # answer_map = [0, 1]
+    # answer_map = [ids[0], ids[1]]
+    answer_map = [0, 1]
 
     res = []
     for i in range(len(y_data)):
