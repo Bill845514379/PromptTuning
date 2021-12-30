@@ -19,7 +19,7 @@ class LMHead(nn.Module):
 
         self.layer_norm = BertLayerNorm(hyper_roberta['label_dim'], eps=1e-5)
         self.classifer = nn.Linear(hyper_roberta['label_dim'], cfg['word_size'], bias=False)
-        self.classifer.weight = PromptMask().roberta.embeddings.word_embeddings.weight
+        # self.classifer.weight = PromptMask().roberta.embeddings.word_embeddings.weight
         self.bias = nn.Parameter(torch.zeros(cfg['word_size']))
 
     def forward(self, input_x, mask0):
@@ -45,6 +45,8 @@ class PromptMask(nn.Module):
     def __init__(self):
         super(PromptMask, self).__init__()
         self.roberta = RobertaModel.from_pretrained(path['roberta_path'])
+        self.lm_head = LMHead()
+        self.lm_head.classifer.weight = self.roberta.roberta.embeddings.word_embeddings.weight
 
     def forward(self, input_x):
         mask0 = (input_x == 50264)
@@ -55,7 +57,8 @@ class PromptMask(nn.Module):
         # x = self.lm_head(x)
         # x = x[mask0]
 
-        return x, mask0
+        x = self.lm_head(x, mask0)
+        return x
 
 
 
