@@ -101,7 +101,7 @@ for test_id in range(len(seeds)):
         #     current_lr *= 0.95
         #     change_lr(optimizer, current_lr)
 
-        if (i+1) % 3 != 0:
+        if (i+1) % 1 != 0:
             change_lr(optimizer_mask, 0)
         else:
             change_lr(optimizer_mask, cfg['bert_learning_rate'])
