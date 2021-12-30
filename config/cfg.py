@@ -6,7 +6,7 @@ cfg = {
     'bert_learning_rate': 1e-5,
     'other_learning_rate': 1e-5,
     'epoch': 20,
-    'K': 8,
+    'K': 16,
     'Kt': 2000,
     'template': 'It was <mask>.',
     'answer': ['terrible', 'great'],
