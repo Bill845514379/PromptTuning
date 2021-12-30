@@ -15,8 +15,8 @@ device = torch.device(cfg['device'])
 class LMHead(nn.Module):
     def __init__(self):
         super(LMHead, self).__init__()
-        # self.label_emb = nn.Embedding(cfg['word_size'], hyper_roberta['label_dim'])
-        self.label_emb = PromptMask().roberta.roberta.embeddings.word_embeddings.weight.clone()
+        self.label_emb = nn.Embedding(cfg['word_size'], hyper_roberta['label_dim'])
+        self.label_emb.weight = PromptMask().roberta.roberta.embeddings.word_embeddings.weight.clone()
         self.dence = nn.Linear(hyper_roberta['label_dim'], hyper_roberta['label_dim'])
         self.layer_norm = BertLayerNorm(hyper_roberta['label_dim'], eps=1e-5)
         self.classifer = nn.Linear(hyper_roberta['label_dim'], 2)
