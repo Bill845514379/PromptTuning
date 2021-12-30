@@ -23,11 +23,11 @@ class LMHead(nn.Module):
 
     def forward(self, input_x):
 
-        gumbel_softmax = F.gumbel_softmax(input_x, hard=True)
-        # x = torch.softmax(x, dim=1)
+        # gumbel_softmax = F.gumbel_softmax(input_x, hard=True)
+        x = torch.softmax(input_x, dim=1)
         roberta_emb = self.label_emb.weight
 
-        input_x = torch.matmul(gumbel_softmax, roberta_emb)
+        input_x = torch.matmul(x, roberta_emb)
 
         x = self.dence(input_x)
         x = gelu(x)
