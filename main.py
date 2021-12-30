@@ -116,8 +116,8 @@ for test_id in range(len(seeds)):
             batch_x, batch_y = Variable(batch_x).long(), Variable(batch_y).long()
             batch_x, batch_y = batch_x.to(device), batch_y.to(device)
 
-            output_0 = net_mask(batch_x)
-            # output = net_head(output_0, mask0)
+            output = net_mask(batch_x)
+            # output = net_head(output, mask0)
 
             criterion = nn.CrossEntropyLoss()
             loss = criterion(output, batch_y)
